@@ -1,0 +1,13 @@
+screen_fade_color: white
+screen_fade_z_index: 10
+login_box_background_color: white
+login_box_text_color: black
+login_box_border_color: black
+login_box_border_width: 3px
+login_box_border_style: solid
+lightbox_login_hide_objects: 0
+lightbox_login_dim_fade_speed: 500
+lightbox_login_box_fade_speed: 1000
+lightbox_login_no_redirect: 0
+lightbox_login_https: 0
+lightbox_login_icon_position: 0

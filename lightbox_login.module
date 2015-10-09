@@ -1,0 +1,198 @@
+<?php
+
+/**
+ * @file
+ * Main file of Lightbox module.
+ */
+
+use Drupal\Core\Url;
+
+/**
+ * Implementation of hook_page_bottom().
+ */
+function lightbox_login_page_bottom(array &$page_bottom) {
+  if ($GLOBALS['user']->isAnonymous() || !empty($GLOBALS['menu_admin'])) {
+    $form = \Drupal::formBuilder()->getForm('Drupal\lightbox_login\Form\lightboxLogin_loginForm');
+    $login_path = \Drupal::service('path.alias_manager')->getAliasByPath('user/login');
+
+    $fl_settings = array(
+      'screenFadeColor' => \Drupal::config('lightbox_login.settings')->get('screen_fade_color'),
+      'screenFadeZIndex' => \Drupal::config('lightbox_login.settings')->get('screen_fade_z_index'),
+      'loginBoxBackgroundColor' => \Drupal::config('lightbox_login.settings')->get('login_box_background_color'),
+      'loginBoxTextColor' => \Drupal::config('lightbox_login.settings')->get('login_box_text_color'),
+      'loginBoxBorderColor' => \Drupal::config('lightbox_login.settings')->get('login_box_border_color'),
+      'loginBoxBorderWidth' => \Drupal::config('lightbox_login.settings')->get('login_box_border_width'),
+      'loginBoxBorderStyle' => \Drupal::config('lightbox_login.settings')->get('login_box_border_style'),
+      'loginPath' => $login_path,
+      'dimFadeSpeed' => \Drupal::config('lightbox_login.settings')->get('lightbox_login_dim_fade_speed'),
+      'boxFadeSpeed' => \Drupal::config('lightbox_login.settings')->get('lightbox_login_box_fade_speed'),
+      'hideObjects' => \Drupal::config('lightbox_login.settings')->get('lightbox_login_hide_objects'),
+    );
+
+    $page_bottom['lightbox_login'] = array(
+      '#prefix' => '<div class="region region-page-bottom"><div id="lightbox_login_dim_screen"></div><div id="lightbox_login_login_box">',
+      '#suffix' => '</div></div>',
+      'form_wrapper' => array(
+        '#prefix' => '<div id="lightbox_login_form_contents"><a href="#" id="lightbox_login_close_button">X</a>',
+        '#suffix' => '</div>',
+        'form' => $form,
+      ),
+    );
+    $page_bottom['lightbox_login']['#attached']['library'][] = 'lightbox_login/lightbox_login_script';
+    $page_bottom['lightbox_login']['#attached']['drupalSettings']['lightbox_login']['lightboxLogin'] = $fl_settings;
+  }
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function lightbox_login_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  global $base_url;
+
+  if ($form_id == 'lightbox_login_user_login_block') {
+    unset($form['name']['#attributes']['autofocus']);
+    unset($form['name']['#description']);
+    unset($form['pass']['#description']);
+    $form['name']['#size'] = 15;
+    $form['pass']['#size'] = 15;
+
+    // If the SSL icon is to be shown on the form, insert it into
+    // the form in the relevant location
+    $config = \Drupal::config('lightbox_login.settings');
+    $icon_position = $config->get('lightbox_login_icon_position');
+    $https_config = $config->get('lightbox_login_https');
+    if ($icon_position && $https_config) {
+      $form['ssl_logo'] = array('#theme' => 'ssl_icon');
+      if ($icon_position == 1) {
+        $form['ssl_logo']['#weight'] = -100;
+        $form['#attributes'] = array('class' => 'ssl_icon_above');
+      }
+      elseif ($icon_position == 2) {
+        $form['ssl_logo']['#weight'] = 100;
+        $form['#attributes'] = array('class' => 'ssl_icon_below');
+      }
+    }
+
+    // Add a wrapper for our #ajax callback
+    $form['#prefix'] = '<div id="lightbox_login_user_login_block_wrapper">';
+    $form['#suffix'] = '</div>';
+
+    // Add links to be used in our Fancy Login block, allowing the states to be changed
+    // between login, register, and recover password
+    $items = array();
+    if (\Drupal::config('user.settings')->get('register') != USER_REGISTER_ADMINISTRATORS_ONLY) {
+      $items['create_account'] = \Drupal::l(t('Create new account'), new Url('user.register', array(), array('attributes' => array('title' => t('Create a new user account.')))));
+    }
+    $items['request_password'] = \Drupal::l(t('Request new password'), new Url('user.pass', array(), array('attributes' => array('title' => t('Request new password via email.')))));
+    $form['user_links'] = array(
+      '#theme' => 'item_list',
+      '#items' => $items,
+    );
+
+    // If Fancy Login is set to use https, change the
+    // protocol of the form action if necessary.
+    if ($https_config && strpos($base_url, 'https:') != 0) {
+      if (strpos($form['#action'], 'https') !== 0) {
+        if (strpos($form['#action'], 'http') === 0) {
+          $form['#action'] = preg_replace('/^http:/', 'https:', $form['#action']);
+        }
+        elseif (strpos($form['#action'], '//') === 0) {
+          $form['#action'] = 'https:' . $form['#action'];
+        }
+        else {
+          $form['#action'] = preg_replace('/^http:/', 'https:', $base_url) . $form['#action'];
+        }
+      }
+    }
+    // If Fancy Login is not set to use https, then we can ajaxify the submit button.
+    // This ajaxification will not work with SSL as the submit will not work cross-domain.
+    else {
+      // Set the submit button of the forum to submit with #ajax
+      // Attach JavaScript settings to the element.
+      $form['actions']['submit']['#ajax'] = array(
+        'callback' => 'Drupal\lightbox_login\Form\lightboxLogin_loginForm::user_login_block_ajax_callback',
+      );
+
+      // The #ajax on submit buttons loaded using AJAX will not work with the current
+      // form key if that form has previously been loaded, as the system thinks
+      // that the #ajax has already been applied to the given submit button and therefore
+      // skips it. This next step ensures that the submit button has a unique key
+      // every time the button is loaded, so that the system does not think the #ajax
+      // is already applied.
+      $form['actions']['submit_' . REQUEST_TIME] = $form['actions']['submit'];
+      $form['actions']['submit']['#access'] = FALSE;
+    }
+  }
+  elseif ($form_id == 'lightbox_login_user_pass') {
+    // Add a wrapper for our #ajax callback
+    $form['#prefix'] = '<div id="lightbox_login_user_pass_block_wrapper">';
+    $form['#suffix'] = '</div>';
+
+    // Add links to be used in our Fancy Login block, allowing the states to be changed
+    // between login, register, and recover password
+    $items = array();
+    $items['sign_in'] = \Drupal::l(t('Sign in'), new Url('user.login', array(), array('attributes' => array('title' => t('Log in to !site_name.', array('!site_name' => \Drupal::config('system.site')->get('name') ?: t('this site')))))));
+    if (\Drupal::config('user.settings')->get('register') != USER_REGISTER_ADMINISTRATORS_ONLY) {
+      $items['create_account'] = \Drupal::l(t('Create new account'), new Url('user.register', array(), array('attributes' => array('title' => t('Create a new user account.')))));
+    }
+    $form['user_links'] = array(
+      '#theme' => 'item_list',
+      '#items' => $items,
+    );
+
+    // If Fancy Login is set to use https, change the
+    // protocol of the form action if necessary.
+    $https_config = \Drupal::config('lightbox_login.settings')->get('lightbox_login_https');
+    if ($https_config && strpos($base_url, 'https:') !== 0) {
+      if (strpos($form['#action'], 'https') !== 0) {
+        if (strpos($form['#action'], 'http') === 0) {
+          $form['#action'] = preg_replace('/^http:/', 'https:', $form['#action']);
+        }
+        elseif (strpos($form['#action'], '//') === 0) {
+          $form['#action'] = 'https:' . $form['#action'];
+        }
+        else {
+          $form['#action'] = preg_replace('/^http:/', 'https:', $base_url) . $form['#action'];
+        }
+      }
+    }
+    // If Fancy Login is not set to use https, then we can ajaxify the submit button.
+    // This ajaxification will not work with SSL as the submit will not work cross-domain.
+    else {
+      // Set the submit button of the forum to submit with #ajax
+      $form['actions']['submit']['#ajax'] = array(
+        'callback' => 'Drupal\lightbox_login\Form\lightboxLogin_passForm::user_pass_ajax_callback',
+      );
+
+      // The #ajax on submit buttons loaded using AJAX will not work with the current
+      // form key if that form has previously been loaded, as the system thinks
+      // that the #ajax has already been applied to the given submit button and therefore
+      // skips it. This next step ensures that the submit button has a unique key
+      // every time the button is loaded, so that the system does not think the #ajax
+      // is already applied.
+      $form['actions']['submit_' . REQUEST_TIME] = $form['actions']['submit'];
+      $form['actions']['submit']['#access'] = FALSE;
+    }
+  }
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function lightbox_login_theme() {
+  return array(
+    'ssl_icon' => array(
+      'path' => drupal_get_path('module', 'lightbox_login') . '/templates',
+      'template' => 'ssl-icon',
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_preprocess_HOOK().
+ */
+function lightbox_login_preprocess_ssl_icon(&$variables) {
+  $variables['file_url'] = file_create_url(drupal_get_path('module', 'lightbox_login') . '/images/https.png');
+  $variables['alt'] = t('Secure Login');
+  $variables['title'] = t('This login is SSL protected');
+}

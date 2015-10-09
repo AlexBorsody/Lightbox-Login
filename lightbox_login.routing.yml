@@ -1,0 +1,14 @@
+lightbox_login.admin_lightbox_login:
+  path: '/admin/config/people/lightbox_login'
+  defaults:
+    _form: '\Drupal\lightbox_login\FancyLoginSettingsForm'
+    _title: 'Fancy Login'
+  requirements:
+    _permission: 'Administer fancy login'
+lightbox_login.lightbox_login_ajax:
+  path: '/lightbox_login/ajax/{type}'
+  defaults:
+    _controller: '\Drupal\lightbox_login\Controller\FancyLoginController::ajax_callback'
+    _title: ''
+  requirements:
+    _user_is_logged_in: 'FALSE'

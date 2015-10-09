@@ -1,0 +1,12 @@
+lightbox_login_script:
+  version: VERSION
+  js:
+    js/lightbox_login.js: {}
+  css:
+    theme:
+      css/lightbox_login.css: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings
+    - core/jquery.once

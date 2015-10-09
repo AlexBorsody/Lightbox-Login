@@ -1,0 +1,5 @@
+lightbox_login.admin_lightbox_login:
+  title: Fancy Login
+  description: 'Settings for Fancy Login Page'
+  route_name: lightbox_login.admin_lightbox_login
+  parent: user.admin_index
