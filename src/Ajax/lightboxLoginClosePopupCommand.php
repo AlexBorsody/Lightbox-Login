@@ -8,7 +8,9 @@
 namespace Drupal\lightbox_login\Ajax;
 
 use Drupal\Core\Ajax\CommandInterface;
-
+/**
+ *
+ */
 class lightboxLoginClosePopupCommand implements CommandInterface {
 
   /**

@@ -3,27 +3,30 @@
  * @file
  * Contains \Drupal\lightbox_login\Controller\lightboxLoginController.
  */
- 
+
 namespace Drupal\lightbox_login\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Drupal\Component\Serialization\Json;
-
+/**
+ *
+ */
 class lightboxLoginController extends ControllerBase {
 
   /**
    * {@inheritdoc}
    */
   public function ajax_callback($type) {
-    switch($type) {
+    switch ($type) {
       case "password":
         $form = \Drupal::formBuilder()->getForm('Drupal\lightbox_login\Form\lightboxLogin_passForm');
-      break;
+        break;
+
       case "login":
         $form = \Drupal::formBuilder()->getForm('Drupal\lightbox_login\Form\lightboxLogin_loginForm');
         unset($form['#prefix'], $form['#suffix']);
-      break;
+        break;
     }
 
     $rendered_form = render($form);

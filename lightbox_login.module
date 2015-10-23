@@ -57,7 +57,7 @@ function lightbox_login_form_alter(&$form, \Drupal\Core\Form\FormStateInterface 
     $form['pass']['#size'] = 15;
 
     // If the SSL icon is to be shown on the form, insert it into
-    // the form in the relevant location
+    // the form in the relevant location.
     $config = \Drupal::config('lightbox_login.settings');
     $icon_position = $config->get('lightbox_login_icon_position');
     $https_config = $config->get('lightbox_login_https');
@@ -73,12 +73,12 @@ function lightbox_login_form_alter(&$form, \Drupal\Core\Form\FormStateInterface 
       }
     }
 
-    // Add a wrapper for our #ajax callback
+    // Add a wrapper for our #ajax callback.
     $form['#prefix'] = '<div id="lightbox_login_user_login_block_wrapper">';
     $form['#suffix'] = '</div>';
 
     // Add links to be used in our Fancy Login block, allowing the states to be changed
-    // between login, register, and recover password
+    // between login, register, and recover password.
     $items = array();
     if (\Drupal::config('user.settings')->get('register') != USER_REGISTER_ADMINISTRATORS_ONLY) {
       $items['create_account'] = \Drupal::l(t('Create new account'), new Url('user.register', array(), array('attributes' => array('title' => t('Create a new user account.')))));
@@ -124,12 +124,12 @@ function lightbox_login_form_alter(&$form, \Drupal\Core\Form\FormStateInterface 
     }
   }
   elseif ($form_id == 'lightbox_login_user_pass') {
-    // Add a wrapper for our #ajax callback
+    // Add a wrapper for our #ajax callback.
     $form['#prefix'] = '<div id="lightbox_login_user_pass_block_wrapper">';
     $form['#suffix'] = '</div>';
 
     // Add links to be used in our Fancy Login block, allowing the states to be changed
-    // between login, register, and recover password
+    // between login, register, and recover password.
     $items = array();
     $items['sign_in'] = \Drupal::l(t('Sign in'), new Url('user.login', array(), array('attributes' => array('title' => t('Log in to !site_name.', array('!site_name' => \Drupal::config('system.site')->get('name') ?: t('this site')))))));
     if (\Drupal::config('user.settings')->get('register') != USER_REGISTER_ADMINISTRATORS_ONLY) {
@@ -159,7 +159,7 @@ function lightbox_login_form_alter(&$form, \Drupal\Core\Form\FormStateInterface 
     // If Fancy Login is not set to use https, then we can ajaxify the submit button.
     // This ajaxification will not work with SSL as the submit will not work cross-domain.
     else {
-      // Set the submit button of the forum to submit with #ajax
+      // Set the submit button of the forum to submit with #ajax.
       $form['actions']['submit']['#ajax'] = array(
         'callback' => 'Drupal\lightbox_login\Form\lightboxLogin_passForm::user_pass_ajax_callback',
       );

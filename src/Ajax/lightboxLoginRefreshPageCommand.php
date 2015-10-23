@@ -8,10 +8,15 @@
 namespace Drupal\lightbox_login\Ajax;
 
 use Drupal\Core\Ajax\CommandInterface;
-
+/**
+ *
+ */
 class lightboxLoginRefreshPageCommand implements CommandInterface {
   protected $closePopup;
 
+  /**
+   *
+   */
   public function __construct($closePopup) {
     $this->closePopup = $closePopup;
   }

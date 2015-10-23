@@ -9,7 +9,9 @@ namespace Drupal\lightbox_login;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
-
+/**
+ *
+ */
 class FancyLoginSettingsForm extends ConfigFormBase {
 
   /**
@@ -19,13 +21,16 @@ class FancyLoginSettingsForm extends ConfigFormBase {
     return 'admin_lightbox_login_form';
   }
 
-  /** 
+  /**
    * {@inheritdoc}
    */
   protected function getEditableConfigNames() {
     return ['lightbox_login.settings'];
   }
 
+  /**
+   *
+   */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config('lightbox_login.settings');
 
@@ -33,7 +38,7 @@ class FancyLoginSettingsForm extends ConfigFormBase {
       '#type' => 'details',
       '#title' => t('Display'),
       '#open' => FALSE,
-	);
+    );
     $form['display']['explanation'] = array(
       '#value' => '<p>' . t('All settings on this page must be valid CSS settings for the item that they will modify. For information on what types of values are valid, check the links included in the descriptions underneath the inputs.') . '</p>',
     );
@@ -137,7 +142,7 @@ class FancyLoginSettingsForm extends ConfigFormBase {
       '#title' => t('Secure login icon position'),
       '#options' => array(t("Don't show icon"), t('Above the form'), t('Below the form')),
       '#default_value' => $config->get('lightbox_login_icon_position'),
-      '#description' => t("If SSL is turned on, turning this option on will display an icon indicating that the login is secure"), 
+      '#description' => t("If SSL is turned on, turning this option on will display an icon indicating that the login is secure"),
     );
 
     return parent::buildForm($form, $form_state);
@@ -156,9 +161,9 @@ class FancyLoginSettingsForm extends ConfigFormBase {
       'login_box_border_width' => 'login_box_border_width',
       'login_box_border_style' => 'Login Box Border Style',
     );
-    foreach ($test_values as $machine=>$human) {
+    foreach ($test_values as $machine => $human) {
       if ($form_state->getValue($machine) == '') {
-      	$form_state->setErrorByName($machine, $this->t('!field must contain a value.', array('!field' => $human)));
+        $form_state->setErrorByName($machine, $this->t('!field must contain a value.', array('!field' => $human)));
       }
     }
     if (!is_numeric(trim($form_state->getValue('lightbox_login_dim_fade_speed')))) {
